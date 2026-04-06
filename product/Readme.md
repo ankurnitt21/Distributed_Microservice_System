@@ -9,6 +9,7 @@
 | 3 | [Project Structure](#3-project-structure) |
 | 4 | [How to Run](#4-how-to-run) |
 | 5 | [REST API Endpoints](#5-rest-api-endpoints) |
+| 5.1 | [Complete Request Flow](#51-complete-request-flow) |
 | 6 | [Configuration and Profiles](#6-configuration-and-profiles) |
 | 7 | [@ConfigurationProperties](#7-configurationproperties---type-safe-config) |
 | 8 | [Spring IoC and Request Isolation](#8-spring-ioc-and-request-isolation) |
@@ -63,7 +64,7 @@ This is a **Spring Boot Product Microservice** built with production-grade featu
 
 | Component | Technology |
 |-----------|-----------|
-| **Framework** | Spring Boot 3.x |
+| **Framework** | Spring Boot 4.0.5 |
 | **Language** | Java 17+ |
 | **Build Tool** | Maven |
 | **API Documentation** | Springdoc OpenAPI 2.0 + Swagger UI |
@@ -287,17 +288,332 @@ INFO  ProductReportGenerator - [LAZY BEAN] ProductReportGenerator ready
 INFO  ProductReportGenerator - [REPORT] Generated REPORT-1712325045123 for Laptop
 ```
 
+### 5. Paginated Products
+```http
+GET /v1/products/paged?page=0&size=10 HTTP/1.1
+```
+
+### 6. Async Get All Products
+```http
+GET /v1/products/async?name=Laptop HTTP/1.1
+```
+Returns `CompletableFuture<ResponseEntity<List<ProductResponse>>>` — processed on `product-async-` thread pool.
+
+### v2 Endpoints (API Versioning)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v2/products` | Get products with pagination by default (`?page=0&size=10`) |
+| GET | `/v2/products/{id}` | Get product by ID |
+
 ### Request Parameter Filtering
 
 ### Filter by Product Name
 ```bash
-curl "http://localhost:8081/v1/products?name=laptop"
+curl "http://localhost:8080/v1/products?name=laptop"
 ```
 
 **How it works:**
 - `?name=laptop` - Optional query parameter
 - Filters products by name (case-sensitive contains match)
 - If not provided, returns all products
+
+### Complete Endpoints Summary
+
+| Method | Endpoint | Resilience4j | Cache | Description |
+|--------|----------|-------------|-------|-------------|
+| POST | `/v1/products` | — | @CacheEvict | Create product |
+| GET | `/v1/products` | @RateLimiter | @Cacheable | Get all (with filter) |
+| GET | `/v1/products/{id}` | @Bulkhead | @Cacheable | Get by ID |
+| GET | `/v1/products/paged` | — | — | Paginated list |
+| GET | `/v1/products/async` | — | — | Async retrieval |
+| POST | `/v1/products/{id}/report` | — | — | Generate report (@Lazy bean) |
+| GET | `/v2/products` | — | — | Paginated by default |
+| GET | `/v2/products/{id}` | — | — | Get by ID |
+
+---
+
+## 5.1 Complete Request Flow
+
+This is the **complete detailed request flow** from client to interceptor to logging to server and back — covering every layer.
+
+### 5.1.1 Full Request Flow Diagram (POST /v1/products)
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT (curl / Postman / Browser)                   │
+│  POST /v1/products                                                               │
+│  Headers: X-Correlation-ID: req-555, X-Employee-ID: emp-100                      │
+│  Body: { "name": "Laptop", "description": "Dell XPS", "price": 1500, "qty": 10 }│
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  1. TOMCAT EMBEDDED SERVER (Port 8080)                                           │
+│     Accepts TCP connection, parses HTTP request, creates                          │
+│     HttpServletRequest & HttpServletResponse objects                              │
+│     Assigns a worker thread from Tomcat thread pool                               │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  2. DISPATCHER SERVLET                                                           │
+│     Maps URL /v1/products → ProductController.createProduct()                    │
+│     But BEFORE reaching the controller, interceptors run first ↓                 │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  3. LOGGING INTERCEPTOR — preHandle() [config/LoggingInterceptor.java]           │
+│                                                                                  │
+│     a) Extract headers from HttpServletRequest:                                  │
+│        correlationId = request.getHeader("X-Correlation-ID")  → "req-555"        │
+│        employeeId    = request.getHeader("X-Employee-ID")     → "emp-100"        │
+│        (If missing: correlationId = UUID.randomUUID(), employeeId = "Unknown")    │
+│                                                                                  │
+│     b) Set MDC (thread-local logging context):                                   │
+│        MDC.put("correlationId", "req-555")                                       │
+│        MDC.put("employeeId", "emp-100")                                          │
+│        → ALL subsequent log statements on this thread auto-include these values  │
+│                                                                                  │
+│     c) Create RequestTimingContext (Prototype bean — new instance per request):   │
+│        RequestTimingContext ctx = timingContextFactory.getObject()                │
+│        ctx.logStartTime() → logs requestId (UUID), start timestamp               │
+│        request.setAttribute("timingContext", ctx)                                │
+│        request.setAttribute("startTime", System.currentTimeMillis())             │
+│                                                                                  │
+│     d) Log the incoming request:                                                 │
+│        LOG: "Incoming request: POST /v1/products"                                │
+│        Output: 2026-04-06 10:30:45 [http-nio-8080-exec-1] INFO                   │
+│                [correlationId=req-555] [employeeId=emp-100]                       │
+│                Incoming request: POST /v1/products                               │
+│                                                                                  │
+│     e) return true → continue to controller                                      │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  4. JAKARTA VALIDATION (@Valid on @RequestBody)                                  │
+│     Validates ProductRequest DTO fields:                                         │
+│       ✓ name: @NotBlank, @Size(min=1, max=100)                                   │
+│       ✓ description: @Size(max=255)                                              │
+│       ✓ price: @DecimalMin("0.0")                                                │
+│       ✓ quantity: @Min(1)                                                        │
+│     If INVALID → MethodArgumentNotValidException → GlobalExceptionHandler → 400  │
+│     If VALID → proceed to controller method                                      │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  5. PRODUCT CONTROLLER — createProduct() [controller/ProductController.java]     │
+│     @PostMapping("/v1/products")                                                 │
+│                                                                                  │
+│     a) Call productService.createProduct(productRequest)                          │
+│        → Delegates to the Singleton ProductService                               │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  6. PRODUCT SERVICE — createProduct() [service/ProductService.java]              │
+│     @CacheEvict(value="products", allEntries=true) ← clears cache on create     │
+│                                                                                  │
+│     a) LOG: "Creating product Laptop"                                            │
+│                                                                                  │
+│     b) Create Product object:                                                    │
+│        id=1, name="Laptop", description="Dell XPS",                              │
+│        price=1500.0, quantity=10, stock=10                                       │
+│        → Stored in in-memory HashMap                                             │
+│                                                                                  │
+│     c) Map to ProductResponse { id:1, name:"Laptop", price:1500.0,              │
+│        stock:10, status:"AVAILABLE" }                                            │
+│                                                                                  │
+│     d) Return ProductResponse                                                    │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  7. BACK IN PRODUCT CONTROLLER                                                   │
+│                                                                                  │
+│     Return ResponseEntity.ok(productResponse)                                    │
+│     → Spring serializes ProductResponse to JSON via Jackson                      │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  8. LOGGING INTERCEPTOR — afterCompletion() [config/LoggingInterceptor.java]     │
+│                                                                                  │
+│     a) Retrieve startTime from request attribute                                 │
+│     b) Calculate duration = currentTime - startTime                              │
+│     c) Retrieve RequestTimingContext → call timingContext.logEndTime()            │
+│        LOG: "[REQUEST END] RequestID: a1b2c3d4 | Duration: 45 ms"               │
+│     d) LOG: "Request completed: CorrelationID=req-555, EmployeeID=emp-100,       │
+│              Duration=45 ms, ResponseStatus=200"                                 │
+│        Output: 2026-04-06 10:30:45 [http-nio-8080-exec-1] INFO                   │
+│                [correlationId=req-555] [employeeId=emp-100]                       │
+│                Request completed: CorrelationID=req-555, EmployeeID=emp-100,     │
+│                Duration=45 ms, ResponseStatus=200                                │
+│     e) MDC.clear() → clean up thread-local data (prevent leaks to next request)  │
+│     f) RequestTimingContext instance becomes eligible for garbage collection      │
+└──────────────────────────────────────┬───────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  9. HTTP RESPONSE TO CLIENT                                                      │
+│     HTTP/1.1 200 OK                                                              │
+│     Content-Type: application/json                                               │
+│     {                                                                            │
+│       "id": 1, "name": "Laptop", "description": "Dell XPS",                     │
+│       "price": 1500.0, "stock": 10, "status": "AVAILABLE"                       │
+│     }                                                                            │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 5.1.2 Kafka Saga Flow (When Order Service Creates an Order)
+
+Product Service also acts as a **Kafka consumer** in the distributed saga. This flow runs independently from REST requests:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  KAFKA LISTENER — handleOrderCreated() [service/ProductService.java]             │
+│  @KafkaListener(topics="order-created", groupId="product-service-group")         │
+│  @CircuitBreaker(name="kafkaProcessor", fallback=kafkaProcessorFallback)          │
+│  @CacheEvict(value={"products","productById"}, allEntries=true)                  │
+│                                                                                  │
+│  Receives: OrderEvent { orderId:1, productId:1, quantity:2 }                     │
+│                                                                                  │
+│  Step 1: Look up product in HashMap                                              │
+│          product = products.get(1)                                               │
+│                                                                                  │
+│  Step 2: Check stock availability                                                │
+│          ┌────────────────────────────────────────┐                               │
+│          │ product.stock (10) >= quantity (2) ?    │                               │
+│          └──────────┬──────────────┬──────────────┘                               │
+│                YES  │              │  NO                                          │
+│                     ▼              ▼                                              │
+│          ┌─────────────────┐  ┌───────────────────┐                               │
+│          │ Reduce stock:   │  │ Send FAILED event │                               │
+│          │ stock = 10 - 2  │  │ to "order-failed" │                               │
+│          │ stock = 8       │  │ reason: "Insuff.  │                               │
+│          │                 │  │ stock. Avail: 10, │                               │
+│          │ Send SUCCESS    │  │ Required: 20"     │                               │
+│          │ event to        │  └───────────────────┘                               │
+│          │ "order-success" │                                                      │
+│          └─────────────────┘                                                      │
+│                                                                                  │
+│  If product is null → Send FAILED: "Product not found with id: X"                │
+│  If CircuitBreaker trips → kafkaProcessorFallback() sends FAILED event           │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 5.1.3 Error Flow — What Happens When Things Fail
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 1: Validation Failure                                            │
+│  Client sends: { "name": "", "quantity": 0 }                                    │
+│                                                                                  │
+│  Tomcat → DispatcherServlet → LoggingInterceptor.preHandle()                     │
+│  → @Valid fails → MethodArgumentNotValidException                                │
+│  → GlobalExceptionHandler.handleException()                                      │
+│  → 400 Bad Request { "message": "...", "status": 400, "timestamp": ... }        │
+│  → LoggingInterceptor.afterCompletion() (duration logged, MDC cleared)           │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 2: Product Not Found                                             │
+│  Client sends: GET /v1/products/999                                              │
+│                                                                                  │
+│  ProductService.getProductById(999)                                              │
+│  → products.get(999) returns null                                                │
+│  → throws ProductNotFoundException("Product not found with id: 999")             │
+│  → GlobalExceptionHandler.handleProductNotFoundException()                       │
+│  → 404 Not Found { "message": "Product not found with id: 999", "status": 404 } │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 3: Rate Limit Exceeded                                           │
+│                                                                                  │
+│  GET /v1/products called more than 100 times per second                          │
+│  → @RateLimiter(name="productApi") triggers fallback                             │
+│  → rateLimitFallback() throws ServiceFallbackException                           │
+│  → 503 { "message": "[ProductService FALLBACK] Rate limit exceeded..." }         │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 4: Insufficient Stock (via Kafka)                                │
+│                                                                                  │
+│  OrderEvent received: productId=1, quantity=100                                  │
+│  Product stock is only 10                                                        │
+│  → Sends OrderFailedEvent to "order-failed" topic                                │
+│  → Order Service updates order status to FAILED                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 5.1.4 Exception Handling Summary (GlobalExceptionHandler)
+
+| Exception | HTTP Status | When |
+|-----------|-------------|------|
+| `ProductNotFoundException` | 404 Not Found | `getProductById()` with invalid ID |
+| `InsufficientStockException` | 409 Conflict | Stock validation failure |
+| `ServiceFallbackException` | 503 Service Unavailable | Resilience4j fallback triggered |
+| `Exception` (generic) | 500 Internal Server Error | Any unexpected error |
+
+All responses use a consistent `ErrorResponse` format:
+```json
+{
+  "message": "Product not found with id: 999",
+  "status": 404,
+  "timestamp": 1712395845000
+}
+```
+
+---
+
+### 5.1.5 Complete Log Trace for a Successful Product Creation
+
+```log
+2026-04-06 10:30:45.100 [http-nio-8080-exec-1] INFO  LoggingInterceptor
+  [correlationId=req-555] [employeeId=emp-100]
+  Incoming request: POST /v1/products
+
+2026-04-06 10:30:45.101 [http-nio-8080-exec-1] INFO  RequestTimingContext
+  [REQUEST START] RequestID: a1b2c3d4-e5f6-... | Time: 2026-04-06 10:30:45
+
+2026-04-06 10:30:45.105 [http-nio-8080-exec-1] INFO  ProductService
+  [correlationId=req-555] [employeeId=emp-100]
+  Creating product Laptop
+
+2026-04-06 10:30:45.130 [http-nio-8080-exec-1] INFO  RequestTimingContext
+  [REQUEST END] RequestID: a1b2c3d4-e5f6-... | Duration: 30 ms
+
+2026-04-06 10:30:45.131 [http-nio-8080-exec-1] INFO  LoggingInterceptor
+  [correlationId=req-555] [employeeId=emp-100]
+  Request completed: CorrelationID=req-555, EmployeeID=emp-100,
+  Duration=31 ms, ResponseStatus=200
+```
+
+---
+
+### 5.1.6 Layer-by-Layer Summary
+
+| # | Layer | Class | What Happens |
+|---|-------|-------|--------------|
+| 1 | **Server** | Tomcat | Accepts connection, assigns thread |
+| 2 | **Servlet** | DispatcherServlet | Maps URL to controller method |
+| 3 | **Interceptor** | LoggingInterceptor.preHandle() | MDC setup, RequestTimingContext start, log request |
+| 4 | **Validation** | Jakarta @Valid | Validates DTO fields |
+| 5 | **Controller** | ProductController | Routes to service, handles report generation |
+| 6 | **Service** | ProductService | Business logic, in-memory storage, Kafka saga |
+| 7 | **Serialization** | Jackson | Java → JSON response |
+| 8 | **Interceptor** | LoggingInterceptor.afterCompletion() | RequestTimingContext end, duration calc, MDC clear |
+| 9 | **Exception** | GlobalExceptionHandler | Catches any exception, returns ErrorResponse JSON |
+| 10 | **Kafka** | @KafkaListener | Async saga: receives order events, validates stock |
 
 ---
 

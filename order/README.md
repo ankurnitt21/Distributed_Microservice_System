@@ -122,13 +122,24 @@ java -Dspring.profiles.active=prod -jar target/order-0.0.1-SNAPSHOT.jar
 
 ## 5. REST API Endpoints
 
+### v1 Endpoints
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/v1/orders` | Create new order |
-| GET | `/v1/orders` | Get all orders (optional name filter) |
-| GET | `/v1/orders/{id}` | Get order by ID |
+| POST | `/v1/orders` | Create new order (syncs with Product Service via REST, sends Kafka event) |
+| GET | `/v1/orders` | Get all orders (optional `?name=` filter, RateLimiter + Cacheable) |
+| GET | `/v1/orders/{id}` | Get order by ID (Bulkhead + Cacheable) |
+| GET | `/v1/orders/paged` | Get orders with pagination (`?page=0&size=10`) |
+| GET | `/v1/orders/async` | Get all orders asynchronously (returns `CompletableFuture`) |
 | GET | `/v1/orders/analytics/report` | Get analytics report (triggers @Lazy initialization) |
 | GET | `/v1/orders/{id}/analytics` | Get statistics for specific order |
+
+### v2 Endpoints (API Versioning)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v2/orders` | Get orders with pagination by default (`?page=0&size=10`) |
+| GET | `/v2/orders/{id}` | Get order by ID |
 
 **Example Requests:**
 
@@ -950,33 +961,319 @@ public class OrderService {
 
 ## 16. Request Flow - How Everything Works Together
 
-### Request Flow:
+This is the **complete detailed request flow** from client to server and back, covering every layer the request passes through.
+
+---
+
+### 16.1 Complete Request Flow Diagram
 
 ```
-1. HTTP Request arrives
-   ↓
-2. LoggingInterceptor.preHandle()
-   - Read X-Correlation-ID, X-Employee-ID headers
-   - Put in MDC (thread-local)
-   - Create OrderProcessingContext prototype (new instance)
-   - Set startTime
-   ↓
-3. DispatcherServlet routes to OrderController
-   ↓
-4. OrderController calls OrderService (Singleton)
-   - OrderService processes request
-   - All logs include MDC values (correlationId, employeeId)
-   ↓
-5. Response returned to client
-   ↓
-6. LoggingInterceptor.afterCompletion()
-   - Retrieve OrderProcessingContext from request attribute
-   - Calculate duration
-   - Log request completion
-   - MDC.clear() (cleanup thread-local data)
-   ↓
-7. OrderProcessingContext instance is garbage collected
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT (curl / Postman / Browser)                   │
+│  POST /v1/orders                                                                 │
+│  Headers: X-Correlation-ID: abc-123, X-Employee-ID: emp-456                      │
+│  Body: { "productId": 1, "name": "Laptop", "price": 0, "quantity": 2 }          │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  1. TOMCAT EMBEDDED SERVER (Port 8081)                                           │
+│     Accepts TCP connection, parses HTTP request, creates                          │
+│     HttpServletRequest & HttpServletResponse objects                              │
+│     Assigns a worker thread from Tomcat thread pool                               │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  2. DISPATCHER SERVLET                                                           │
+│     Maps URL /v1/orders → OrderController.createOrder()                          │
+│     But BEFORE reaching the controller, interceptors run first ↓                 │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  3. LOGGING INTERCEPTOR — preHandle() [config/LoggingInterceptor.java]           │
+│                                                                                  │
+│     a) Extract headers from HttpServletRequest:                                  │
+│        correlationId = request.getHeader("X-Correlation-ID")  → "abc-123"        │
+│        employeeId    = request.getHeader("X-Employee-ID")     → "emp-456"        │
+│        (If missing: correlationId = UUID.randomUUID(), employeeId = "Unknown")    │
+│                                                                                  │
+│     b) Set MDC (thread-local logging context):                                   │
+│        MDC.put("correlationId", "abc-123")                                       │
+│        MDC.put("employeeId", "emp-456")                                          │
+│        → ALL subsequent log statements on this thread auto-include these values  │
+│                                                                                  │
+│     c) Create OrderProcessingContext (Prototype bean — new instance per request): │
+│        OrderProcessingContext ctx = contextProvider.getObject()                   │
+│        ctx.setStartTime(System.currentTimeMillis())                              │
+│        request.setAttribute("processingContext", ctx)                            │
+│                                                                                  │
+│     d) Log the incoming request:                                                 │
+│        LOG: "Incoming request: POST /v1/orders"                                  │
+│        Output: 2026-04-06 10:30:45 [http-nio-8081-exec-1] INFO                   │
+│                [correlationId=abc-123] [employeeId=emp-456]                       │
+│                Incoming request: POST /v1/orders                                 │
+│                                                                                  │
+│     e) return true → continue to controller                                      │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  4. JAKARTA VALIDATION (@Valid on @RequestBody)                                  │
+│     Validates OrderRequest DTO fields:                                           │
+│       ✓ productId: @NotNull                                                      │
+│       ✓ name: @NotBlank, @Size(min=1, max=100)                                   │
+│       ✓ price: @DecimalMin("0.0")                                                │
+│       ✓ quantity: @Min(1)                                                        │
+│     If INVALID → MethodArgumentNotValidException → GlobalExceptionHandler → 400  │
+│     If VALID → proceed to controller method                                      │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  5. ORDER CONTROLLER — createOrder() [controller/OrderController.java]           │
+│     @PostMapping("/v1/orders")                                                   │
+│                                                                                  │
+│     a) Call orderService.createOrder(orderRequest)                               │
+│        → Delegates to the Singleton OrderService                                 │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  6. ORDER SERVICE — createOrder() [service/OrderService.java]                    │
+│     @CacheEvict(value="orders", allEntries=true) ← clears cache on create       │
+│                                                                                  │
+│     a) LOG: "Creating order Laptop with productId=1"                             │
+│                                                                                  │
+│     b) SYNC REST CALL to Product Service (via RestTemplate):                     │
+│        ┌────────────────────────────────────────────────────────────────────┐     │
+│        │ getProductFromService(productId=1)                                 │     │
+│        │ @CircuitBreaker(name="productService", fallback=...)               │     │
+│        │ @Retry(name="productService") — up to 3 retries, 1s wait          │     │
+│        │                                                                    │     │
+│        │ GET http://localhost:8080/v1/products/1                            │     │
+│        │      ↓                                                             │     │
+│        │ ┌──────────────────────────────────────┐                           │     │
+│        │ │ PRODUCT SERVICE (Port 8080)           │                           │     │
+│        │ │ Returns: { id:1, name:"Laptop",       │                           │     │
+│        │ │   price:1500.0, stock:10 }            │                           │     │
+│        │ └──────────────────────────────────────┘                           │     │
+│        │ If Product Service is DOWN:                                        │     │
+│        │   → CircuitBreaker opens after 50% failures in 10 calls            │     │
+│        │   → Fallback throws ServiceFallbackException → 503                 │     │
+│        └────────────────────────────────────────────────────────────────────┘     │
+│                                                                                  │
+│     c) Create Order object:                                                      │
+│        id=1, productId=1, name="Laptop", price=1500.0, quantity=2                │
+│        status="PENDING"                                                          │
+│        → Stored in in-memory HashMap                                             │
+│                                                                                  │
+│     d) LOG: "Order created with id=1, status=PENDING"                            │
+│                                                                                  │
+│     e) ASYNC KAFKA EVENT (via KafkaTemplate):                                    │
+│        ┌────────────────────────────────────────────────────────────────────┐     │
+│        │ sendOrderCreatedEvent(order, product)                              │     │
+│        │ Topic: "order-created"                                             │     │
+│        │ Key: "1" (orderId)                                                 │     │
+│        │ Value: OrderEvent {                                                │     │
+│        │   orderId: 1, productId: 1, quantity: 2,                           │     │
+│        │   price: 1500.0, orderName: "Laptop", timestamp: 1712395845000     │     │
+│        │ }                                                                  │     │
+│        │ → Sent to Confluent Cloud Kafka (pkc-921jm.us-east-2.aws)          │     │
+│        │ → Product Service @KafkaListener picks this up asynchronously      │     │
+│        └────────────────────────────────────────────────────────────────────┘     │
+│                                                                                  │
+│     f) Map to OrderResponse and return                                           │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  7. BACK IN ORDER CONTROLLER                                                     │
+│                                                                                  │
+│     a) Optional: Record analytics via @Lazy OrderAnalyticsService                │
+│        analytics = analyticsServiceProvider.getIfAvailable()                      │
+│        If available → analytics.recordOrderCreated(1, "Laptop", 1500.0)          │
+│                                                                                  │
+│     b) Return ResponseEntity.ok(orderResponse)                                   │
+│        → Spring serializes OrderResponse to JSON via Jackson                     │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  8. LOGGING INTERCEPTOR — afterCompletion() [config/LoggingInterceptor.java]     │
+│                                                                                  │
+│     a) Retrieve OrderProcessingContext from request attribute                    │
+│     b) Calculate duration = currentTime - startTime                              │
+│     c) LOG: "Request completed: Duration=45 ms, ResponseStatus=200"              │
+│        Output: 2026-04-06 10:30:45 [http-nio-8081-exec-1] INFO                   │
+│                [correlationId=abc-123] [employeeId=emp-456]                       │
+│                Request completed: Duration=45 ms, ResponseStatus=200             │
+│     d) MDC.clear() → clean up thread-local data (prevent leaks to next request)  │
+│     e) OrderProcessingContext instance becomes eligible for garbage collection    │
+└──────────────────────────────────┬───────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  9. HTTP RESPONSE TO CLIENT                                                      │
+│     HTTP/1.1 200 OK                                                              │
+│     Content-Type: application/json                                               │
+│     {                                                                            │
+│       "id": 1, "productId": 1, "name": "Laptop",                                │
+│       "description": "Gaming Laptop", "price": 1500.0, "status": "PENDING"       │
+│     }                                                                            │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### 16.2 Asynchronous Saga Flow (Happens AFTER Response)
+
+The client already received a `200 OK` with status `PENDING`. Meanwhile, in the background:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  10. KAFKA BROKER (Confluent Cloud)                                             │
+│      Topic: "order-created" receives the OrderEvent                             │
+└──────────────────────────────────┬──────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  11. PRODUCT SERVICE — @KafkaListener (handleOrderCreated)                      │
+│      Receives: OrderEvent { orderId:1, productId:1, quantity:2 }                │
+│                                                                                 │
+│      Check stock:                                                               │
+│        product.stock=10, required=2 → 10 >= 2 ✅                                │
+│        product.stock = 10 - 2 = 8                                               │
+│                                                                                 │
+│      Send: OrderSuccessEvent → topic "order-success"                            │
+│      (OR: OrderFailedEvent  → topic "order-failed" if stock insufficient)       │
+└──────────────────────────────────┬──────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  12. ORDER SERVICE — @KafkaListener (handleOrderSuccess/handleOrderFailed)       │
+│      Receives: OrderSuccessEvent { orderId:1, status:"SUCCESS" }                │
+│                                                                                 │
+│      order.setStatus("CONFIRMED")  ← order status updated                      │
+│      @CacheEvict clears cached order data                                       │
+│                                                                                 │
+│      LOG: "Order status updated to CONFIRMED: orderId=1"                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Final State:** `GET /v1/orders/1` now returns `"status": "CONFIRMED"`
+
+---
+
+### 16.3 Error Flow — What Happens When Things Fail
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 1: Validation Failure                                            │
+│  Client sends: { "name": "", "quantity": 0 }                                    │
+│                                                                                  │
+│  Tomcat → DispatcherServlet → LoggingInterceptor.preHandle()                     │
+│  → @Valid fails → MethodArgumentNotValidException                                │
+│  → GlobalExceptionHandler.handleException()                                      │
+│  → 400 Bad Request { "message": "...", "status": 400, "timestamp": ... }        │
+│  → LoggingInterceptor.afterCompletion() (duration logged, MDC cleared)           │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 2: Product Service Down                                          │
+│                                                                                  │
+│  OrderService.getProductFromService(productId)                                   │
+│  → RestTemplate.getForObject() throws ConnectException                           │
+│  → @Retry: attempts 3 times with 1s wait between each                            │
+│  → All 3 attempts fail                                                           │
+│  → @CircuitBreaker: triggers fallback method                                     │
+│  → productServiceFallback() throws ServiceFallbackException                      │
+│  → GlobalExceptionHandler.handleServiceFallbackException()                       │
+│  → 503 Service Unavailable                                                       │
+│  → { "message": "[ProductService FALLBACK] Product Service is unavailable..." }  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 3: Order Not Found                                               │
+│  Client sends: GET /v1/orders/999                                                │
+│                                                                                  │
+│  OrderService.getOrderById(999)                                                  │
+│  → orders.get(999) returns null                                                  │
+│  → throws OrderNotFoundException("Order not found with id: 999")                 │
+│  → GlobalExceptionHandler.handleOrderNotFoundException()                         │
+│  → 404 Not Found { "message": "Order not found with id: 999", "status": 404 }   │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  ERROR SCENARIO 4: Rate Limit Exceeded                                           │
+│                                                                                  │
+│  GET /v1/orders called more than 100 times per second                            │
+│  → @RateLimiter(name="orderApi") triggers fallback                               │
+│  → rateLimitFallback() throws ServiceFallbackException                           │
+│  → 503 { "message": "[OrderService FALLBACK] Rate limit exceeded..." }           │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 16.4 Complete Log Trace for a Successful Order Creation
+
+```log
+2026-04-06 10:30:45.100 [http-nio-8081-exec-1] INFO  LoggingInterceptor
+  [correlationId=abc-123] [employeeId=emp-456]
+  Incoming request: POST /v1/orders
+
+2026-04-06 10:30:45.102 [http-nio-8081-exec-1] INFO  OrderService
+  [correlationId=abc-123] [employeeId=emp-456]
+  Creating order Laptop with productId=1
+
+2026-04-06 10:30:45.103 [http-nio-8081-exec-1] INFO  OrderService
+  [correlationId=abc-123] [employeeId=emp-456]
+  Calling Product Service for productId: 1
+
+2026-04-06 10:30:45.150 [http-nio-8081-exec-1] INFO  OrderService
+  [correlationId=abc-123] [employeeId=emp-456]
+  Product found: id=1, price=1500.0, stock=10
+
+2026-04-06 10:30:45.152 [http-nio-8081-exec-1] INFO  OrderService
+  [correlationId=abc-123] [employeeId=emp-456]
+  Order created with id=1, status=PENDING
+
+2026-04-06 10:30:45.160 [http-nio-8081-exec-1] INFO  OrderService
+  [correlationId=abc-123] [employeeId=emp-456]
+  Kafka Event Sent: topic=order-created, orderId=1, productId=1, quantity=2
+
+2026-04-06 10:30:45.162 [http-nio-8081-exec-1] INFO  LoggingInterceptor
+  [correlationId=abc-123] [employeeId=emp-456]
+  Request completed: Duration=62 ms, ResponseStatus=200
+
+--- Async (after response sent) ---
+
+2026-04-06 10:30:46.200 [kafka-listener-1] INFO  OrderService
+  SUCCESS Event Received: orderId=1, status=SUCCESS
+
+2026-04-06 10:30:46.201 [kafka-listener-1] INFO  OrderService
+  Order status updated to CONFIRMED: orderId=1
+```
+
+---
+
+### 16.5 Layer-by-Layer Summary
+
+| # | Layer | Class | What Happens |
+|---|-------|-------|--------------|
+| 1 | **Server** | Tomcat | Accepts connection, assigns thread |
+| 2 | **Servlet** | DispatcherServlet | Maps URL to controller method |
+| 3 | **Interceptor** | LoggingInterceptor.preHandle() | MDC setup, timing start, log request |
+| 4 | **Validation** | Jakarta @Valid | Validates DTO fields |
+| 5 | **Controller** | OrderController | Routes to service, handles analytics |
+| 6 | **Service** | OrderService | Business logic, REST call, Kafka publish |
+| 7 | **External Call** | RestTemplate + Resilience4j | Sync call to Product Service with retry/circuit breaker |
+| 8 | **Event Bus** | KafkaTemplate | Async event to Kafka topic |
+| 9 | **Serialization** | Jackson | Java → JSON response |
+| 10 | **Interceptor** | LoggingInterceptor.afterCompletion() | Duration calc, log response, MDC clear |
+| 11 | **Exception** | GlobalExceptionHandler | Catches any exception, returns ErrorResponse JSON |
 
 ---
 
