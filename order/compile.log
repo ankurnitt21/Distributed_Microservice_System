@@ -1,0 +1,381 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.example.order:order >-----------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ order ---
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ order ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 21 source files with javac [debug parameters release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[37,8] class OrderServiceLifecycleBean is public, should be declared in a file named OrderServiceLifecycleBean.java
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[163,8] class CustomBeanFactoryPostProcessor is public, should be declared in a file named CustomBeanFactoryPostProcessor.java
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/AppConfig.java:[4,43] package org.springframework.boot.web.client does not exist
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/AppConfig.java:[39,38] cannot find symbol
+  symbol:   class RestTemplateBuilder
+  location: class com.example.order.order.config.AppConfig
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[38,51] cannot find symbol
+  symbol: class ApplicationContextAware
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[13,22] cannot find symbol
+  symbol:   method setMessage(java.lang.String)
+  location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[14,22] cannot find symbol
+  symbol:   method setStatus(int)
+  location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[15,22] cannot find symbol
+  symbol:   method setTimestamp(long)
+  location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[22,22] cannot find symbol
+  symbol:   method setMessage(java.lang.String)
+  location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[23,22] cannot find symbol
+  symbol:   method setStatus(int)
+  location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[24,22] cannot find symbol
+  symbol:   method setTimestamp(long)
+  location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[79,5] method does not override or implement a method from a supertype
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/controller/OrderController.java:[38,55] cannot find symbol
+  symbol:   method getId()
+  location: variable orderResponse of type com.example.order.order.dto.OrderResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/controller/OrderController.java:[38,78] cannot find symbol
+  symbol:   method getName()
+  location: variable orderResponse of type com.example.order.order.dto.OrderResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/controller/OrderController.java:[38,103] cannot find symbol
+  symbol:   method getPrice()
+  location: variable orderResponse of type com.example.order.order.dto.OrderResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[46,69] cannot find symbol
+  symbol:   method getName()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[46,93] cannot find symbol
+  symbol:   method getPrice()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[56,75] cannot find symbol
+  symbol:   method getId()
+  location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[56,92] cannot find symbol
+  symbol:   method getPrice()
+  location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[56,112] cannot find symbol
+  symbol:   method getStock()
+  location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[59,45] cannot find symbol
+  symbol:   method getPrice()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[59,75] cannot find symbol
+  symbol:   method getPrice()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[59,96] cannot find symbol
+  symbol:   method getPrice()
+  location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[63,18] cannot find symbol
+  symbol:   method setId(long)
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[64,39] cannot find symbol
+  symbol:   method getName()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[65,46] cannot find symbol
+  symbol:   method getDescription()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[66,18] cannot find symbol
+  symbol:   method setPrice(double)
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[67,43] cannot find symbol
+  symbol:   method getQuantity()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[68,18] cannot find symbol
+  symbol:   method setStatus(java.lang.String)
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[70,29] cannot find symbol
+  symbol:   method getId()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[71,73] cannot find symbol
+  symbol:   method getId()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[89,59] cannot find symbol
+  symbol:   method getPrice()
+  location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[111,40] cannot find symbol
+  symbol:   method getId()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[112,44] cannot find symbol
+  symbol:   method getId()
+  location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[113,41] cannot find symbol
+  symbol:   method getQuantity()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[114,38] cannot find symbol
+  symbol:   method getPrice()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[115,42] cannot find symbol
+  symbol:   method getName()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[116,23] cannot find symbol
+  symbol:   method setTimestamp(long)
+  location: variable orderEvent of type com.example.order.order.dto.OrderEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[118,73] cannot find symbol
+  symbol:   method getId()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[120,43] cannot find symbol
+  symbol:   method getId()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[120,60] cannot find symbol
+  symbol:   method getId()
+  location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[120,75] cannot find symbol
+  symbol:   method getQuantity()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[134,29] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[134,56] cannot find symbol
+  symbol:   method getStatus()
+  location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[136,50] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[138,22] cannot find symbol
+  symbol:   method setStatus(java.lang.String)
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[139,89] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[141,73] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[156,28] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[156,54] cannot find symbol
+  symbol:   method getFailureReason()
+  location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[158,49] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[160,22] cannot find symbol
+  symbol:   method setStatus(java.lang.String)
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[162,32] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[162,58] cannot find symbol
+  symbol:   method getFailureReason()
+  location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[164,72] cannot find symbol
+  symbol:   method getOrderId()
+  location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[183,55] cannot find symbol
+  symbol:   method getName()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[190,29] cannot find symbol
+  symbol:   method getId()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[191,31] cannot find symbol
+  symbol:   method getName()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[192,38] cannot find symbol
+  symbol:   method getDescription()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[193,32] cannot find symbol
+  symbol:   method getPrice()
+  location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[194,33] cannot find symbol
+  symbol:   method getStatus()
+  location: variable order of type com.example.order.order.model.Order
+[INFO] 61 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.009 s
+[INFO] Finished at: 2026-04-05T16:19:16+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project order: Compilation failure: Compilation failure: 
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[37,8] class OrderServiceLifecycleBean is public, should be declared in a file named OrderServiceLifecycleBean.java
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[163,8] class CustomBeanFactoryPostProcessor is public, should be declared in a file named CustomBeanFactoryPostProcessor.java
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/AppConfig.java:[4,43] package org.springframework.boot.web.client does not exist
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/AppConfig.java:[39,38] cannot find symbol
+[ERROR]   symbol:   class RestTemplateBuilder
+[ERROR]   location: class com.example.order.order.config.AppConfig
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[38,51] cannot find symbol
+[ERROR]   symbol: class ApplicationContextAware
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[13,22] cannot find symbol
+[ERROR]   symbol:   method setMessage(java.lang.String)
+[ERROR]   location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[14,22] cannot find symbol
+[ERROR]   symbol:   method setStatus(int)
+[ERROR]   location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[15,22] cannot find symbol
+[ERROR]   symbol:   method setTimestamp(long)
+[ERROR]   location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[22,22] cannot find symbol
+[ERROR]   symbol:   method setMessage(java.lang.String)
+[ERROR]   location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[23,22] cannot find symbol
+[ERROR]   symbol:   method setStatus(int)
+[ERROR]   location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/Exceptions/GlobalExceptionHandler.java:[24,22] cannot find symbol
+[ERROR]   symbol:   method setTimestamp(long)
+[ERROR]   location: variable errorResponse of type com.example.order.order.dto.ErrorResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/config/BeanLifecycleDemo.java:[79,5] method does not override or implement a method from a supertype
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/controller/OrderController.java:[38,55] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable orderResponse of type com.example.order.order.dto.OrderResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/controller/OrderController.java:[38,78] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable orderResponse of type com.example.order.order.dto.OrderResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/controller/OrderController.java:[38,103] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable orderResponse of type com.example.order.order.dto.OrderResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[46,69] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[46,93] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[56,75] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[56,92] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[56,112] cannot find symbol
+[ERROR]   symbol:   method getStock()
+[ERROR]   location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[59,45] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[59,75] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[59,96] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[63,18] cannot find symbol
+[ERROR]   symbol:   method setId(long)
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[64,39] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[65,46] cannot find symbol
+[ERROR]   symbol:   method getDescription()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[66,18] cannot find symbol
+[ERROR]   symbol:   method setPrice(double)
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[67,43] cannot find symbol
+[ERROR]   symbol:   method getQuantity()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[68,18] cannot find symbol
+[ERROR]   symbol:   method setStatus(java.lang.String)
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[70,29] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[71,73] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[89,59] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable orderRequest of type com.example.order.order.dto.OrderRequest
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[111,40] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[112,44] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[113,41] cannot find symbol
+[ERROR]   symbol:   method getQuantity()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[114,38] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[115,42] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[116,23] cannot find symbol
+[ERROR]   symbol:   method setTimestamp(long)
+[ERROR]   location: variable orderEvent of type com.example.order.order.dto.OrderEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[118,73] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[120,43] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[120,60] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable product of type com.example.order.order.dto.ProductResponse
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[120,75] cannot find symbol
+[ERROR]   symbol:   method getQuantity()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[134,29] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[134,56] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[136,50] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[138,22] cannot find symbol
+[ERROR]   symbol:   method setStatus(java.lang.String)
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[139,89] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[141,73] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable successEvent of type com.example.order.order.dto.OrderSuccessEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[156,28] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[156,54] cannot find symbol
+[ERROR]   symbol:   method getFailureReason()
+[ERROR]   location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[158,49] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[160,22] cannot find symbol
+[ERROR]   symbol:   method setStatus(java.lang.String)
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[162,32] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[162,58] cannot find symbol
+[ERROR]   symbol:   method getFailureReason()
+[ERROR]   location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[164,72] cannot find symbol
+[ERROR]   symbol:   method getOrderId()
+[ERROR]   location: variable failedEvent of type com.example.order.order.dto.OrderFailedEvent
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[183,55] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[190,29] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[191,31] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[192,38] cannot find symbol
+[ERROR]   symbol:   method getDescription()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[193,32] cannot find symbol
+[ERROR]   symbol:   method getPrice()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] /D:/Projects/Microservices_Latest/order/src/main/java/com/example/order/order/service/OrderService.java:[194,33] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable order of type com.example.order.order.model.Order
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
