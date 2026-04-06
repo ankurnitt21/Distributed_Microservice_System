@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  product-service:
+    build: ./product
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  order-service:
+    build: ./order
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
